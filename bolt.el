@@ -34,6 +34,18 @@
                 (message "%s" (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'"))))))
   )
 
+(defvar bolt--helm-actions
+  '((name . "Default execution action:")
+    (candidates . (("bolt--execute-cmd" 'bolt--execute-cmd)
+                   ("bolt--execute-word" 'bolt--execute-word)
+                   ("eval-defun" 'eval-defun)
+                   ))
+    (action . (lambda (candidate)
+                (local-set-key (kbd "<C-return>") (car (cdr (car candidate))))
+                )))
+  "Helm source for bolt actions"
+  )
+
 ;;;###autoload
 (defun bolt--execute-word ()
   "Select the word as an argument for some command to be
@@ -47,6 +59,12 @@ ones that are available to bolt."
   "Select the line to be executed as the command in the shell."
   (interactive)
   (message "%s" (shell-command-to-string (bolt--get-line))))
+
+;;;###autoload
+(defun bolt--c-return-key-binding ()
+  "Select the line to be executed as the command in the shell."
+  (interactive)
+  (helm :sources 'bolt--helm-actions))
 
 (provide 'bolt)
 
