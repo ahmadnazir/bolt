@@ -31,7 +31,7 @@
   `((name . "Select command:")
     (candidates . bolt--get-scripts)
     (action . (lambda (candidate)
-                (message "%s" (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'"))))))
+                (kill-new (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'"))))))
   )
 
 (defvar bolt--helm-actions
