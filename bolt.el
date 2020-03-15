@@ -14,8 +14,11 @@
 (defcustom bolt--script-dir "~/.bolt"
   "Directory where scripts are stored that will be used by bolt")
 
-(defun bolt--get-word()
-  (word-at-point))
+(defun bolt--get-selection ()
+  (buffer-substring (mark) (point)))
+
+(defun bolt--get-argument ()
+  (if (use-region-p) (bolt--get-selection) (word-at-point)))
 
 (defun bolt--get-line ()
   (thing-at-point 'line))
@@ -31,7 +34,7 @@
   `((name . "Select command:")
     (candidates . bolt--get-scripts)
     (action . (lambda (candidate)
-                (kill-new (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'"))))))
+                (kill-new (message "%s" (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'")))))))
   )
 
 (defvar bolt--helm-actions
@@ -47,12 +50,12 @@
   )
 
 ;;;###autoload
-(defun bolt--execute-word ()
+(defun bolt--execute ()
   "Select the word as an argument for some command to be
 executed. The user also selects the command to be run among the
 ones that are available to bolt."
   (interactive)
-  (helm :sources (bolt--helm-scripts 'bolt--get-word)))
+  (helm :sources (bolt--helm-scripts 'bolt--get-argument)))
 
 ;;;###autoload
 (defun bolt--execute-cmd ()
@@ -61,7 +64,7 @@ ones that are available to bolt."
   (message "%s" (shell-command-to-string (bolt--get-line))))
 
 ;;;###autoload
-(defun bolt--c-return-key-binding ()
+(defun bolt--set-key-binding-c-return ()
   "Select the line to be executed as the command in the shell."
   (interactive)
   (helm :sources 'bolt--helm-actions))
