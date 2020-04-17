@@ -17,7 +17,7 @@
 (defun bolt--get-argument ()
   (if (use-region-p)
       (buffer-substring (mark) (point))
-    (word-at-point)))
+    (thing-at-point 'sentence)))
 
 (defun bolt--run-cmd (cmd)
   (shell-command-to-string (s-join " " `("cd" ,bolt--script-dir "&&" ,cmd))))
@@ -47,7 +47,7 @@
 
 ;;;###autoload
 (defun bolt--execute ()
-  "Use selected string or word as point as an argument for a
+  "Use selected string or sentence as point as an argument for a
 command. The output is written the the *Messages* buffer and
 copied to the clipboard."
   (interactive)
