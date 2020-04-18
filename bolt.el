@@ -14,10 +14,23 @@
 (defcustom bolt--script-dir "~/.bolt"
   "Directory where scripts are stored that will be used by bolt")
 
+(defcustom bolt--output-buffer "**bolt**"
+  "Bolt output buffer name")
+
+(defun bolt--paragraph-at-point()
+  "Paragraph at point"
+  (let ((start (save-excursion
+                 (backward-paragraph)
+                 (point)))
+        (end (save-excursion
+               (forward-paragraph)
+               (point))))
+    (buffer-substring-no-properties start end)))
+
 (defun bolt--get-argument ()
   (if (use-region-p)
       (buffer-substring (mark) (point))
-    (thing-at-point 'sentence)))
+    (bolt--paragraph-at-point)))
 
 (defun bolt--run-cmd (cmd)
   (shell-command-to-string (s-join " " `("cd" ,bolt--script-dir "&&" ,cmd))))
@@ -25,13 +38,12 @@
 (defun bolt--get-scripts ()
   (split-string (bolt--run-cmd "ls")))
 
-(defun bolt--helm-scripts (get-arg-fn handle-fn)
+(defun bolt--helm-scripts ()
   "Helm source for bolt scripts"
   `((name . "Select command:")
     (candidates . bolt--get-scripts)
     (action . (lambda (candidate)
-                (funcall (quote ,handle-fn) (message "%s" (bolt--run-cmd (concat "./" candidate " '" ,(funcall get-arg-fn) "'")))))))
-  )
+                (bolt--output (lambda() (bolt--run-cmd (concat "./" candidate " '" ,(bolt--get-argument) "'"))))))))
 
 (defvar bolt--helm-actions
   '((name . "Default execution action:")
@@ -51,40 +63,29 @@
 command. The output is written the the *Messages* buffer and
 copied to the clipboard."
   (interactive)
-  (helm :sources (bolt--helm-scripts 'bolt--get-argument 'kill-new)))
-
-;;;###autoload
-(defun bolt--execute-and-replace ()
-  "Use selected string or word as point as an argument for a
-command. The output is written the the *Messages* buffer and
-selected string is replaced with the output."
-  (interactive)
-  (helm :sources (bolt--helm-scripts 'bolt--get-argument '(lambda (output)
-                                                            (delete-region (mark) (point))
-                                                            (insert output)))))
-
-;;;###autoload
-(defun bolt--execute-and-output ()
-  "Use selected string or word as point as an argument for a
-command. The output is written the the *Messages* buffer and also
-written to the buffer."
-  (interactive)
-  (helm :sources (bolt--helm-scripts 'bolt--get-argument '(lambda (output)
-                                                            (newline)
-                                                            (insert output)
-                                                            ))))
+  (helm :sources (bolt--helm-scripts)))
 
 ;;;###autoload
 (defun bolt--execute-cmd ()
   "Select the line to be executed as the command in the shell."
   (interactive)
-  (message "%s" (shell-command-to-string (thing-at-point 'line))))
+  (let ((cmd (bolt--get-argument)))
+    (bolt--output (lambda() (shell-command-to-string cmd)))))
 
-;;;###autoload
-(defun bolt--set-key-binding-c-return ()
-  "Select the line to be executed as the command in the shell."
-  (interactive)
-  (helm :sources 'bolt--helm-actions))
+
+(defun bolt--output (fn)
+    "Call the fn and output the results"
+  (let ((b (get-buffer bolt--output-buffer)))
+    (if b (switch-to-buffer-other-window b)
+      (switch-to-buffer-other-window bolt--output-buffer))
+    (message "Loading...")
+    (let ((output (funcall fn)))
+      (erase-buffer)
+      (insert output))
+    (beginning-of-buffer)
+    (other-window 1)
+    (message "Done!")
+    ))
 
 (provide 'bolt)
 
