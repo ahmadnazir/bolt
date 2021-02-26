@@ -15,7 +15,10 @@ anything that can be executed from he command line.
 Assuming that we use bash to evaluation the actions, the actions need to be
 namespaced and some convention for storing those actions are needed.
   
-## TODO Displaying results:
+## DONE Displaying results:
+[Update: using a separate buffer to show the results. This is more useful then a
+pop-up for the applications that I have for bolt]
+
 I love how results are shown when working with the clojure repl. Something like
 that would be amazing. Also, we need to be able to print to standard out.
 Deciding what the the output form is something I haven't really thought about.

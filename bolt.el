@@ -33,17 +33,19 @@
     (bolt--paragraph-at-point)))
 
 (defun bolt--run-cmd (cmd)
-  (shell-command-to-string (s-join " " `("cd" ,bolt--script-dir "&&" ,cmd))))
+  (shell-command-to-string cmd)
+  ;; (shell-command-to-string (s-join " " `("cd" ,bolt--script-dir "&&" ,cmd)))
+  )
 
 (defun bolt--get-scripts ()
-  (split-string (bolt--run-cmd "ls")))
+  (split-string (bolt--run-cmd (concat "ls " bolt--script-dir))))
 
 (defun bolt--helm-scripts ()
   "Helm source for bolt scripts"
   `((name . "Select command:")
     (candidates . bolt--get-scripts)
     (action . (lambda (candidate)
-                (bolt--output (lambda() (bolt--run-cmd (concat "./" candidate " '" ,(bolt--get-argument) "'"))))))))
+                (bolt--output (lambda() (bolt--run-cmd (concat ,bolt--script-dir "/" candidate " '" ,(bolt--get-argument) "'"))))))))
 
 (defvar bolt--helm-actions
   '((name . "Default execution action:")
@@ -86,6 +88,17 @@ copied to the clipboard."
     (other-window 1)
     (message "Done!")
     ))
+
+;; TODO: make it buffer specific
+(defcustom bolt--default-cmd "echo Default command not configured. Configure a command: M-x customize-variable bolt--default-cmd"
+  "Bolt default command")
+
+;;;###autoload
+(defun bolt--execute-default-cmd ()
+  "Execute bolt default command"
+  (interactive)
+  (bolt--output (lambda() (shell-command-to-string bolt--default-cmd))))
+
 
 (provide 'bolt)
 
